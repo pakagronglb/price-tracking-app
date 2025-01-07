@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:scraper": "ts-node scripts/test-scraper.ts"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.17",
@@ -18,7 +19,8 @@
     "react": "latest",
     "react-dom": "latest",
     "react-responsive-carousel": "^3.2.23",
-    "supports-color": "^8.1.1"
+    "supports-color": "^8.1.1",
+    "ts-node": "^10.9.1"
   },
   "devDependencies": {
     "@types/node": "latest",

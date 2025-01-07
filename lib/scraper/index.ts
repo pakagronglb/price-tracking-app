@@ -21,6 +21,13 @@ export async function scrapeAmazonProduct(url: string) {
     host: 'brd.superproxy.io',
     port,
     rejectUnauthorized: false,
+    timeout: 5000, // 5 second timeout for the request
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.5',
+      'Connection': 'keep-alive',
+    }
   }
 
   try {
@@ -28,7 +35,7 @@ export async function scrapeAmazonProduct(url: string) {
     const response = await axios.get(url, options);
     const $ = cheerio.load(response.data);
 
-    // Extract the product title
+    // Essential data only - skip optional fields if they take too long
     const title = $('#productTitle').text().trim();
     const currentPrice = extractPrice(
       $('.priceToPay span.a-price-whole'),
@@ -45,34 +52,27 @@ export async function scrapeAmazonProduct(url: string) {
     );
 
     const outOfStock = $('#availability span').text().trim().toLowerCase() === 'currently unavailable';
-
-    const images = 
-      $('#imgBlkFront').attr('data-a-dynamic-image') || 
-      $('#landingImage').attr('data-a-dynamic-image') ||
-      '{}'
-
-    const imageUrls = Object.keys(JSON.parse(images));
-
-    const currency = extractCurrency($('.a-price-symbol'))
-    const discountRate = $('.savingsPercentage').text().replace(/[-%]/g, "");
-
-    const description = extractDescription($)
+    
+    // Get first image only instead of parsing all images
+    const image = $('#landingImage').attr('src') || '';
+    
+    const currency = extractCurrency($('.a-price-symbol'));
 
     // Construct data object with scraped information
     const data = {
       url,
       currency: currency || '$',
-      image: imageUrls[0],
+      image,
       title,
       currentPrice: Number(currentPrice) || Number(originalPrice),
       originalPrice: Number(originalPrice) || Number(currentPrice),
       priceHistory: [],
-      discountRate: Number(discountRate),
+      discountRate: 0, // Calculate this later if needed
       category: 'category',
-      reviewsCount:100,
-      stars: 4.5,
+      reviewsCount: 0, // Skip reviews count for speed
+      stars: 0, // Skip stars for speed
       isOutOfStock: outOfStock,
-      description,
+      description: '', // Skip description for speed
       lowestPrice: Number(currentPrice) || Number(originalPrice),
       highestPrice: Number(originalPrice) || Number(currentPrice),
       averagePrice: Number(currentPrice) || Number(originalPrice),
@@ -80,6 +80,7 @@ export async function scrapeAmazonProduct(url: string) {
 
     return data;
   } catch (error: any) {
-    console.log(error);
+    console.error(`Failed to scrape product: ${error.message}`);
+    throw error;
   }
 }

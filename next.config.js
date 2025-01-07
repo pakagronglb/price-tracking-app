@@ -6,6 +6,9 @@ const nextConfig = {
   },
   images: {
     domains: ['m.media-amazon.com']
+  },
+  functions: {
+    maxDuration: 60
   }
 }
 
